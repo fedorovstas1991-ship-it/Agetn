@@ -248,7 +248,7 @@
 
 ## Как работать в новых сессиях Codex
 
-- Всегда начинать с локального пути проекта: `/Users/fedorovstas/Projects/YandexAgetn`.
+- Всегда начинать с локального пути проекта: `<path-to-Agetn>` (проверить через `pwd` в корне репозитория).
 - Всегда указывать ветку для работы: например `main` или `codex/<task-name>`.
 - Формулировать задачу сразу с ожидаемым результатом: «починить X, закоммитить, запушить, дать PR».
 - GitHub-ссылку использовать как контекст (`origin` и база PR), а не как замену локальному workspace.
@@ -268,7 +268,7 @@
 ### Первоначальная сборка
 
 ```bash
-cd Projects/YandexAgetn
+cd Projects/Agetn
 
 # Автоматическая сборка (рекомендуется) - проверяет зависимости,
 # устанавливает пакеты, синхронизирует skills, собирает UI
@@ -284,13 +284,13 @@ node scripts/ui.js build # Сборка Control UI
 ### Запуск
 
 **Вариант 1: Двойной клик (macOS)**
-- Открыть `YandexAgetn/` в Finder
+- Открыть `Agetn/` в Finder
 - Дважды кликнуть на `yagent-onboard-ui.command`
 - Браузер откроется автоматически с онбордингом
 
 **Вариант 2: Из терминала**
 ```bash
-cd Projects/YandexAgetn
+cd Projects/Agetn
 ./yagent-onboard-ui.command
 ```
 
@@ -373,7 +373,7 @@ pnpm build
 **Gateway не запускается:**
 ```bash
 # Проверить логи
-cat ~/Projects/YandexAgetn/logs/yagent/gateway.log
+cat ~/.yagent-yagent/logs/gateway.log
 
 # Проверить порт
 lsof -i :18789

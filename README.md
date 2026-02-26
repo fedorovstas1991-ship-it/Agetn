@@ -13,12 +13,12 @@
 ## Репозиторий
 
 - GitHub: `https://github.com/fedorovstas1991-ship-it/Agetn`
-- Локальный путь (macOS): `/Users/fedorovstas/Projects/Agetn`
+- Локальный путь: путь вашего локального clone (определяйте через `pwd` в корне репозитория)
 
 ## Быстрый старт (локально)
 
 ```bash
-cd /Users/fedorovstas/Projects/Agetn
+cd <path-to-Agetn>
 pnpm install
 ./scripts/sync-skills.sh
 ./scripts/build-autonomous.sh
