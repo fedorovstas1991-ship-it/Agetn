@@ -156,7 +156,7 @@ export function iconForTab(tab: Tab): IconName {
     case "skills":
       return "zap";
     case "mcp":
-      return "package";
+      return "puzzle";
     case "nodes":
       return "monitor";
     case "config":
