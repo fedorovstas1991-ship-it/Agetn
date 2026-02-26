@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { listGatewayMethods } from "../server-methods-list.js";
+import { coreGatewayHandlers } from "../server-methods.js";
 import { mcpHandlers } from "./mcp.js";
 import type { GatewayContext } from "./types.js";
 
@@ -7,6 +8,12 @@ describe("Gateway methods list", () => {
   test("includes mcp.list", () => {
     const methods = listGatewayMethods();
     expect(methods).toContain("mcp.list");
+  });
+});
+
+describe("Gateway core handlers", () => {
+  test("registers mcp.list handler", () => {
+    expect(coreGatewayHandlers["mcp.list"]).toBeTypeOf("function");
   });
 });
 
