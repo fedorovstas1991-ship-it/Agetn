@@ -42,6 +42,7 @@ import {
   updateExecApprovalsFormValue,
 } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
+import { loadMcpServers } from "./controllers/mcp.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
 import { deleteSession, loadSessions, patchSession } from "./controllers/sessions.ts";
@@ -77,6 +78,7 @@ import { renderExecApprovalPrompt } from "./views/exec-approval.ts";
 import { renderGatewayUrlConfirmation } from "./views/gateway-url-confirmation.ts";
 import { renderInstances } from "./views/instances.ts";
 import { renderLogs } from "./views/logs.ts";
+import { renderMcp } from "./views/mcp.ts";
 import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
@@ -1085,6 +1087,17 @@ export function renderApp(state: AppViewState) {
         onSaveKey: (key) => saveSkillApiKey(state, key),
         onInstall: (skillKey, name, installId) =>
           installSkill(state, skillKey, name, installId),
+      })
+      : nothing
+    }
+
+        ${state.tab === "mcp"
+      ? renderMcp({
+        loading: state.mcpLoading,
+        servers: state.mcpServers,
+        error: state.mcpError,
+        onRefresh: () => void loadMcpServers(state as any),
+        onAddNew: () => state.handleMcpAddNew(),
       })
       : nothing
     }

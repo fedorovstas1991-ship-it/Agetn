@@ -28,7 +28,9 @@ import type {
   SkillStatusReport,
   StatusSummary,
   NostrProfile,
+  McpServer,
 } from "./types.ts";
+import { loadMcpServers } from "./controllers/mcp.ts";
 import type { WizardStep } from "./types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import { normalizeAgentId, parseAgentSessionKey } from "../../../src/routing/session-key.js";
@@ -476,6 +478,10 @@ export class OpenClawApp extends LitElement {
   @state() skillsBusyKey: string | null = null;
   @state() skillMessages: Record<string, SkillMessage> = {};
 
+  @state() mcpLoading = false;
+  @state() mcpServers: McpServer[] = [];
+  @state() mcpError: string | null = null;
+
   @state() debugLoading = false;
   @state() debugStatus: StatusSummary | null = null;
   @state() debugHealth: HealthSnapshot | null = null;
@@ -577,6 +583,9 @@ export class OpenClawApp extends LitElement {
     if (changed.has("connected") && this.connected && this.onboardingWelcomePendingMessage) {
       void this.trySendOnboardingWelcome();
     }
+    if (changed.has("tab") && this.tab === "mcp") {
+      void this.loadMcp();
+    }
   }
 
   connect() {
@@ -640,6 +649,16 @@ export class OpenClawApp extends LitElement {
 
   async loadCron() {
     await loadCronInternal(this as unknown as Parameters<typeof loadCronInternal>[0]);
+  }
+
+  async loadMcp() {
+    await loadMcpServers(this as unknown as Parameters<typeof loadMcpServers>[0]);
+  }
+
+  handleMcpAddNew() {
+    this.chatMessage = "Подключи новый MCP-сервер";
+    this.setTab("chat");
+    setTimeout(() => void this.handleSendChat(), 100);
   }
 
   async handleAbortChat() {

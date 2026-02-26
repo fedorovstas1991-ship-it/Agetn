@@ -13,6 +13,7 @@ import { execApprovalsHandlers } from "./server-methods/exec-approvals.js";
 import { healthHandlers } from "./server-methods/health.js";
 import { logsHandlers } from "./server-methods/logs.js";
 import { modelsHandlers } from "./server-methods/models.js";
+import { mcpHandlers } from "./server-methods/mcp.js";
 import { nodeHandlers } from "./server-methods/nodes.js";
 import { sendHandlers } from "./server-methods/send.js";
 import { sessionsHandlers } from "./server-methods/sessions.js";
@@ -174,6 +175,7 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
   ...execApprovalsHandlers,
   ...webHandlers,
   ...modelsHandlers,
+  ...mcpHandlers,
   ...configHandlers,
   ...wizardHandlers,
   ...talkHandlers,

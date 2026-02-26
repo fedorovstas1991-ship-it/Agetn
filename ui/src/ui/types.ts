@@ -847,3 +847,14 @@ export type LogEntry = {
   message?: string | null;
   meta?: Record<string, unknown> | null;
 };
+
+export type McpServer = {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string> | null;
+};
+
+export type McpListResult = {
+  servers: McpServer[];
+};

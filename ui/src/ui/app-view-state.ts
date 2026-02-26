@@ -29,6 +29,7 @@ import {
   WizardStep,
   LogLevel,
   LogEntry,
+  McpServer,
 } from "./types.ts";
 import { PresenceEntry } from "./types.ts";
 import { ChatAttachment, ChatQueueItem, CronFormState, CronWizardState } from "./ui-types.ts";
@@ -264,6 +265,9 @@ export class AppViewState {
   skillEdits: Record<string, string> = {};
   skillMessages: Record<string, SkillMessage> = {};
   skillsBusyKey: string | null = null;
+  mcpLoading: boolean = false;
+  mcpServers: McpServer[] = [];
+  mcpError: string | null = null;
   productCreateSkillOpen: boolean = false;
   productCreateSkillId: string = "";
   productCreateSkillName: string = "";
@@ -1474,6 +1478,31 @@ export class AppViewState {
     this.productEditingSkillCode = "";
   };
 
+  loadMcp = async () => {
+    if (!this.client) {
+      this.mcpError = "Gateway client not available";
+      return;
+    }
+
+    this.mcpLoading = true;
+    this.mcpError = null;
+
+    try {
+      const result = await this.client.request<{ servers: McpServer[] }>("mcp.list", {});
+      this.mcpServers = result.servers;
+    } catch (err) {
+      this.mcpError = String(err);
+      this.mcpServers = [];
+    } finally {
+      this.mcpLoading = false;
+    }
+  };
+
+  handleMcpAddNew = () => {
+    this.chatMessage = "Подключи новый MCP-сервер";
+    this.setTab("chat");
+    setTimeout(() => void this.handleSendChat(), 100);
+  };
 
   productEditSkill = (skillId: string) => {
     this.productOpenEditSkill(skillId);

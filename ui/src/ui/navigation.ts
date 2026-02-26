@@ -14,7 +14,7 @@ export const TAB_GROUPS = [
     label: RU_UI.groupControl,
     tabs: ["channels", "usage", "cron"],
   },
-  { label: RU_UI.groupCapabilities, tabs: ["agents", "skills"] },
+  { label: RU_UI.groupCapabilities, tabs: ["agents", "skills", "mcp"] },
   {
     label: RU_UI.groupAdvanced,
     tabs: ["overview", "instances", "sessions", "nodes", "config", "debug", "logs"],
@@ -30,6 +30,7 @@ export type Tab =
   | "usage"
   | "cron"
   | "skills"
+  | "mcp"
   | "nodes"
   | "chat"
   | "config"
@@ -45,6 +46,7 @@ const TAB_PATHS: Record<Tab, string> = {
   usage: "/usage",
   cron: "/cron",
   skills: "/skills",
+  mcp: "/mcp",
   nodes: "/nodes",
   chat: "/chat",
   config: "/config",
@@ -153,6 +155,8 @@ export function iconForTab(tab: Tab): IconName {
       return "calendar";
     case "skills":
       return "zap";
+    case "mcp":
+      return "puzzle";
     case "nodes":
       return "monitor";
     case "config":
