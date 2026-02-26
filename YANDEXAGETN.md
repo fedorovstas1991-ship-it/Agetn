@@ -1,6 +1,6 @@
 # YAgent: текущий статус и бэклог
 
-Обновлено: 2026-02-26 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding)
+Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md)
 
 ## Текущие фичи (реализовано)
 - Product UI и основная навигация русифицированы (кроме `Docs`).
@@ -171,11 +171,23 @@
 - Результат: `exit 0`, полный fresh reset профиля выполнен, UI собран, `one-search-mcp` зарегистрирован, onboarding URL автоматически открыт.
 - Логи: `~/.yagent-yagent/logs/gateway.log`.
 
+**Баг: вкладка MCP показывала `TypeError: context.loadConfig is not a function` (2026-02-27)**
+- **Файлы:** `src/gateway/server-methods/mcp.ts`, `src/gateway/server-methods/mcp.test.ts`.
+- **Причина:** handler `mcp.list` (добавлен в PR #1) вызывал `context.loadConfig()`, но на типе `GatewayRequestContext` (`src/gateway/server-methods/types.ts`) такого метода нет — он не существует ни в типе, ни в runtime объекте.
+- **Фикс:** заменено на `import { loadConfig } from "../../config/config.js"` + `const config = loadConfig()` — стандартный паттерн всех остальных gateway handler'ов (`update.ts`, `server-model-catalog.ts`).
+- **Тесты:** обновлены — мокают модуль `config/config.js` через `vi.mock()` вместо несуществующего `context.loadConfig`.
+
+**Bootstrap TOOLS.md: инструкции подключения MCP-серверов (2026-02-27)**
+- **Файл:** `docs/reference/templates/TOOLS.md`
+- **Что добавлено:** секция «Как подключить новый MCP-сервер» — пошаговая инструкция для агента (поиск пакета на npm, добавление через `config.patch`, перезапуск gateway) + список популярных MCP-серверов.
+- **Зачем:** кнопка «Подключить новый MCP-сервер» во вкладке MCP отправляет чат-сообщение агенту — без инструкций в bootstrap агент не знал как подключать MCP-серверы.
+
 **Текущий статус после фикса**
 - Запуск через `yagent-onboard-ui.command`: работает.
 - Чистый онбординг (fresh reset, новый токен, открытие onboarding URL): работает.
 - Диалог в UI (`main` агент): работает.
 - Telegram статус в `main` агенте: OK (подтверждено в UI).
+- Вкладка MCP: работает, показывает список серверов (после фикса `loadConfig`).
 
 ### Сессионный ключ в product-режиме
 - Новая сессия: `agent:${agentId}:subagent:${crypto.randomUUID()}` — `ui/src/ui/app.ts:940`
@@ -462,3 +474,5 @@ brew install ollama
 - Глобальные компоненты (code block): `ui/src/styles/components.css`
 - Markdown рендер: `ui/src/ui/markdown.ts`
 - Онбординг/пресеты: `src/onboarding/*`, `yagent-onboard-ui.command`
+- MCP вкладка/handler: `ui/src/ui/views/mcp.ts`, `ui/src/ui/controllers/mcp.ts`, `src/gateway/server-methods/mcp.ts`
+- Bootstrap-знание агента об инструментах: `docs/reference/templates/TOOLS.md`

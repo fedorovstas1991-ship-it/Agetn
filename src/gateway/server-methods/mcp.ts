@@ -1,10 +1,11 @@
 import type { GatewayRequestHandlers } from "./types.js";
+import { loadConfig } from "../../config/config.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 
 export const mcpHandlers: GatewayRequestHandlers = {
-  "mcp.list": async ({ respond, context }) => {
+  "mcp.list": async ({ respond }) => {
     try {
-      const config = await context.loadConfig();
+      const config = loadConfig();
       const mcpServers = config.mcpServers ?? {};
 
       const servers = Object.entries(mcpServers).map(([name, cfg]) => ({

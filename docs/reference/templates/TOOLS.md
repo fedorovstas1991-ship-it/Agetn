@@ -12,3 +12,43 @@
 - Brave API, Perplexity, Grok и другие платные провайдеры НЕ нужны.
 - Не пытайся устанавливать `@modelcontextprotocol/server-brave` или другие MCP-серверы для поиска — `one-search` уже настроен и готов к работе.
 - Если инструменты one-search не появляются в списке доступных, сообщи пользователю — возможно, MCP-сервер не успел запуститься. Но никогда не говори, что он "не существует".
+
+## Как подключить новый MCP-сервер
+
+Когда пользователь просит подключить новый MCP-сервер:
+
+1. **Найди пакет на npm:**
+   ```
+   web_search("mcp <название> npm package")
+   ```
+   или выполни:
+   ```
+   exec("npm search <название>-mcp")
+   ```
+
+2. **Добавь в конфиг** через `config.patch`:
+   ```json
+   {
+     "mcpServers": {
+       "<имя>": {
+         "command": "npx",
+         "args": ["-y", "<package-name>"],
+         "env": {
+           "API_KEY": "..."
+         }
+       }
+     }
+   }
+   ```
+   - `env` — только если сервер требует API-ключ. Спроси у пользователя ключ, если нужен.
+   - `command: "npx"` с `args: ["-y", "<package>"]` — стандартный способ запуска MCP-серверов без глобальной установки.
+
+3. **После добавления** сообщи пользователю, что для активации нового MCP-сервера нужно перезапустить gateway (перезапуск скрипта `yagent-onboard-ui.command` или рестарт через UI).
+
+### Популярные MCP-серверы
+
+- `one-search-mcp` — веб-поиск (DuckDuckGo, уже подключён)
+- `@modelcontextprotocol/server-filesystem` — работа с файловой системой
+- `@modelcontextprotocol/server-github` — GitHub API (нужен `GITHUB_TOKEN`)
+- `@modelcontextprotocol/server-postgres` — PostgreSQL (нужен `DATABASE_URL`)
+

@@ -1,8 +1,15 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import { listGatewayMethods } from "../server-methods-list.js";
 import { coreGatewayHandlers } from "../server-methods.js";
+
+vi.mock("../../config/config.js", () => ({
+  loadConfig: vi.fn(),
+}));
+
+import { loadConfig } from "../../config/config.js";
 import { mcpHandlers } from "./mcp.js";
-import type { GatewayContext } from "./types.js";
+
+const mockLoadConfig = vi.mocked(loadConfig);
 
 describe("Gateway methods list", () => {
   test("includes mcp.list", () => {
@@ -19,31 +26,29 @@ describe("Gateway core handlers", () => {
 
 describe("mcp.list handler", () => {
   test("returns servers from config", async () => {
+    mockLoadConfig.mockReturnValue({
+      mcpServers: {
+        "test-server": {
+          command: "npx",
+          args: ["-y", "test-mcp"],
+          env: { TEST: "value" },
+        },
+      },
+    } as any);
+
     let respondCalled = false;
     let respondSuccess = false;
     let respondData: any = null;
 
-    const mockContext: Partial<GatewayContext> = {
-      loadConfig: async () => ({
-        mcpServers: {
-          "test-server": {
-            command: "npx",
-            args: ["-y", "test-mcp"],
-            env: { TEST: "value" },
-          },
-        },
-      }),
-    };
-
     await mcpHandlers["mcp.list"]({
       params: {},
-      respond: (success, data, error) => {
+      respond: (success, data) => {
         respondCalled = true;
         respondSuccess = success;
         respondData = data;
       },
-      context: mockContext as GatewayContext,
-    });
+      context: {} as any,
+    } as any);
 
     expect(respondCalled).toBe(true);
     expect(respondSuccess).toBe(true);
@@ -57,41 +62,37 @@ describe("mcp.list handler", () => {
   });
 
   test("returns empty array when no mcpServers", async () => {
-    let respondData: any = null;
+    mockLoadConfig.mockReturnValue({} as any);
 
-    const mockContext: Partial<GatewayContext> = {
-      loadConfig: async () => ({}),
-    };
+    let respondData: any = null;
 
     await mcpHandlers["mcp.list"]({
       params: {},
-      respond: (success, data) => {
+      respond: (_success, data) => {
         respondData = data;
       },
-      context: mockContext as GatewayContext,
-    });
+      context: {} as any,
+    } as any);
 
     expect(respondData.servers).toEqual([]);
   });
 
   test("handles config load error", async () => {
+    mockLoadConfig.mockImplementation(() => {
+      throw new Error("Config unavailable");
+    });
+
     let respondSuccess = false;
     let respondError: any = null;
 
-    const mockContext: Partial<GatewayContext> = {
-      loadConfig: async () => {
-        throw new Error("Config unavailable");
-      },
-    };
-
     await mcpHandlers["mcp.list"]({
       params: {},
-      respond: (success, data, error) => {
+      respond: (success, _data, error) => {
         respondSuccess = success;
         respondError = error;
       },
-      context: mockContext as GatewayContext,
-    });
+      context: {} as any,
+    } as any);
 
     expect(respondSuccess).toBe(false);
     expect(respondError).toBeTruthy();
