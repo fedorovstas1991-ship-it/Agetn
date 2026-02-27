@@ -45,7 +45,39 @@ export function buildKimiOnboardingPatch(apiKey: string) {
     },
     plugins: {
       slots: {
-        memory: "none",
+        memory: "memory-core",
+      },
+      entries: {
+        "memory-core": {
+          enabled: true,
+          config: {
+            timezone: "Europe/Moscow",
+            language: "ru",
+            ollama: {
+              baseUrl: "http://127.0.0.1:11434",
+              model: "qwen2.5:7b-instruct",
+              timeoutMs: 60_000,
+            },
+          },
+        },
+      },
+    },
+    memory: {
+      backend: "qmd",
+      qmd: {
+        includeDefaultMemory: true,
+        update: {
+          interval: "5m",
+        },
+      },
+    },
+    mcpServers: {
+      "one-search": {
+        command: "npx",
+        args: ["-y", "one-search-mcp"],
+        env: {
+          SEARCH_PROVIDER: "duckduckgo",
+        },
       },
     },
   };

@@ -45,6 +45,7 @@ import { ExecApprovalsSnapshot, ExecApprovalsFile } from "./controllers/exec-app
 import { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import { loadConfigSchema } from "./controllers/config.ts";
 import type { TelegramConnectFlowState } from "./views/channels.types.ts";
+import { buildCreateSkillChatPrompt } from "./skills-flow.ts";
 import { normalizeAgentId } from "../../../src/routing/session-key.js";
 
 export class AppViewState {
@@ -1522,19 +1523,10 @@ export class AppViewState {
   };
 
   productCreateSkill = () => {
-    this.productCreateSkillOpen = true;
-    this.productCreateSkillId = "";
-    this.productCreateSkillName = "";
-    this.productCreateSkillDescription = "";
-    this.productCreateSkillFileContent = `// Скилл ${this.productCreateSkillId || "нового скилла"}
-// Описание: ${this.productCreateSkillDescription || "Описание скилла"}
-
-// Пример простого скилла
-export async function run(ctx: any, args: any) {
-  ctx.log.info("Hello from new skill!");
-  return \`Выполнил новый скилл с аргументами: \${JSON.stringify(args)}\`;
-}
-`;
+    this.productCreateSkillOpen = false;
+    this.chatMessage = buildCreateSkillChatPrompt();
+    this.setTab("chat");
+    setTimeout(() => void this.handleSendChat(), 100);
   };
 
   productSaveSkill = async () => {

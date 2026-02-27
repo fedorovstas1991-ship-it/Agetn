@@ -23,6 +23,32 @@ describe("onboarding-wizard patch", () => {
       },
     ]);
     expect(patch.agents.defaults.model.primary).toBe("openrouter/moonshotai/kimi-k2.5");
-    expect(patch.plugins.slots.memory).toBe("none");
+    expect(patch.plugins.slots.memory).toBe("memory-core");
+    expect(patch.plugins.entries["memory-core"]).toEqual({
+      enabled: true,
+      config: {
+        timezone: "Europe/Moscow",
+        language: "ru",
+        ollama: {
+          baseUrl: "http://127.0.0.1:11434",
+          model: "qwen2.5:7b-instruct",
+          timeoutMs: 60000,
+        },
+      },
+    });
+    expect(patch.memory).toEqual({
+      backend: "qmd",
+      qmd: {
+        includeDefaultMemory: true,
+        update: {
+          interval: "5m",
+        },
+      },
+    });
+    expect(patch.mcpServers["one-search"]).toEqual({
+      command: "npx",
+      args: ["-y", "one-search-mcp"],
+      env: { SEARCH_PROVIDER: "duckduckgo" },
+    });
   });
 });

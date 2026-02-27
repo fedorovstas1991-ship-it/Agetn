@@ -5,6 +5,7 @@ import { loadChatHistory, type ChatState } from "./controllers/chat.ts";
 import { buildCronPromptTemplate } from "./controllers/cron-wizard.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, pathForTab } from "./navigation.ts";
+import { CREATE_SKILL_BUTTON_LABEL } from "./skills-flow.ts";
 import { renderChat } from "./views/chat.ts";
 
 function extractMessageRole(message: unknown): string {
@@ -451,7 +452,7 @@ function renderSkillsPanel(state: AppViewState) {
     }
       </div>
       <div class="product-panel__section">
-        <button class="product-btn primary" @click=${() => state.productCreateSkill()}>Добавить новый скилл</button>
+        <button class="product-btn primary" @click=${() => state.productCreateSkill()}>${CREATE_SKILL_BUTTON_LABEL}</button>
       </div>
       ${state.skillsError ? html`<div class="product-callout danger" style="margin-top:12px;">${state.skillsError}</div>` : nothing}
     </section>
