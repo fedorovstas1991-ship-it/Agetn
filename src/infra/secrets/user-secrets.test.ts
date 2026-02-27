@@ -53,6 +53,12 @@ describe("setUserSecret", () => {
     );
     expect(fs.writeFile).toHaveBeenCalled();
   });
+
+  test("does not write metadata if store.set throws", async () => {
+    mockStore.set.mockImplementation(() => { throw new Error("Keychain unavailable"); });
+    await expect(setUserSecret("MY_KEY", "value", "/tmp/test")).rejects.toThrow("Keychain unavailable");
+    expect(fs.writeFile).not.toHaveBeenCalled();
+  });
 });
 
 describe("deleteUserSecret", () => {
@@ -62,6 +68,8 @@ describe("deleteUserSecret", () => {
     vi.mocked(fs.writeFile).mockResolvedValue(undefined);
     await deleteUserSecret("MY_KEY", "/tmp/test");
     expect(mockStore.delete).toHaveBeenCalledWith(expect.stringContaining("my_key"));
+    const writtenContent = JSON.parse(vi.mocked(fs.writeFile).mock.calls[0][1] as string);
+    expect(writtenContent).toEqual([]);
   });
 });
 

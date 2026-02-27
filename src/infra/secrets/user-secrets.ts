@@ -37,6 +37,7 @@ export async function listUserSecrets(stateDir: string): Promise<UserSecret[]> {
 
 export async function setUserSecret(name: string, value: string, stateDir: string): Promise<void> {
   const store = getSecretStore();
+  // store.set is synchronous; if it throws, writeMetadata is not reached
   store.set(secretRef(name), value);
   const secrets = await readMetadata(stateDir);
   const existing = secrets.findIndex((s) => s.name === name);
@@ -51,6 +52,7 @@ export async function setUserSecret(name: string, value: string, stateDir: strin
 
 export async function deleteUserSecret(name: string, stateDir: string): Promise<void> {
   const store = getSecretStore();
+  // store.delete is synchronous; if it throws, writeMetadata is not reached
   store.delete(secretRef(name));
   const secrets = await readMetadata(stateDir);
   await writeMetadata(stateDir, secrets.filter((s) => s.name !== name));
