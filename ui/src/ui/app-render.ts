@@ -237,12 +237,8 @@ export function renderApp(state: AppViewState) {
             </div>
           </div>
         </div>
-        <div class="topbar-status" @click=${() => state.handleSecretClick()}>
-          <div class="pill">
-            <span class="statusDot ${state.connected ? "ok" : ""}"></span>
-            <span>${RU_UI.health}</span>
-            <span class="mono">${state.connected ? RU_UI.healthOk : RU_UI.healthOffline}</span>
-          </div>
+        <div class="topbar-status">
+          ${isChat ? renderChatControls(state, "topbar") : nothing}
           ${renderThemeToggle(state)}
         </div>
       </header>
@@ -302,8 +298,7 @@ export function renderApp(state: AppViewState) {
             ${state.tab === "usage" ? nothing : html`<div class="page-sub">${subtitleForTab(state.tab)}</div>`}
           </div>
           <div class="page-meta">
-            ${state.lastError ? html`<div class="pill danger">${state.lastError}</div>` : nothing}
-            ${isChat ? renderChatControls(state) : nothing}
+            ${!isChat && state.lastError ? html`<div class="pill danger">${state.lastError}</div>` : nothing}
           </div>
         </section>
 
@@ -1221,6 +1216,9 @@ export function renderApp(state: AppViewState) {
         queue: state.chatQueue,
         connected: state.connected,
         canSend: state.connected,
+        basePath: state.basePath,
+        connectionGraceActive: state.chatConnectionGraceActive,
+        showOnboardingHeroLoader: state.onboardingFirstResponsePending,
         disabledReason: chatDisabledReason,
         error: state.lastError,
         sessions: state.sessionsResult,

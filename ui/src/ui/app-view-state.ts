@@ -118,6 +118,8 @@ export class AppViewState {
   chatQueue: ChatQueueItem[] = [];
   chatManualRefreshInFlight: boolean = false;
   chatFirstGreetingCtaDismissedSessionKey: string | null = null;
+  onboardingFirstResponsePending: boolean = false;
+  chatConnectionGraceActive: boolean = false;
   onboardingWizardSessionId: string | null = null;
   onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
   onboardingWizardStep: WizardStep | null = null;

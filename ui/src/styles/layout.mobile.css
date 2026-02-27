@@ -203,6 +203,7 @@
     padding: 4px 8px;
     font-size: 11px;
     gap: 4px;
+    min-width: auto;
   }
 
   .topbar-status .pill .mono {
@@ -490,6 +491,7 @@
   .topbar-status .pill {
     padding: 3px 6px;
     font-size: 10px;
+    min-width: auto;
   }
 
   .theme-toggle {

@@ -1,6 +1,6 @@
 # YAgent: текущий статус и бэклог
 
-Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md)
+Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md, inline tamagotchi loader + кроссбраузерная SVG-анимация, перенос chat controls в topbar рядом с переключателем темы)
 
 ## Текущие фичи (реализовано)
 - Product UI и основная навигация русифицированы (кроме `Docs`).
@@ -181,6 +181,17 @@
 - **Файл:** `docs/reference/templates/TOOLS.md`
 - **Что добавлено:** секция «Как подключить новый MCP-сервер» — пошаговая инструкция для агента (поиск пакета на npm, добавление через `config.patch`, перезапуск gateway) + список популярных MCP-серверов.
 - **Зачем:** кнопка «Подключить новый MCP-сервер» во вкладке MCP отправляет чат-сообщение агенту — без инструкций в bootstrap агент не знал как подключать MCP-серверы.
+
+**UI: онбординг-лоадер и расположение контролов (2026-02-27)**
+- **Файлы:** `ui/src/ui/chat/grouped-render.ts`, `ui/src/ui/assets/tamagotchi-loader.svg`, `ui/src/ui/views/chat.ts`, `ui/src/styles/chat/grouped.css`, `ui/src/styles/chat/layout.css`, `ui/src/ui/app-render.helpers.ts`, `ui/src/ui/app-render.ts`, `ui/src/ui/i18n.ru.ts`, `ui/src/ui/anthropic-theme.css`.
+- **Что исправлено:**
+  - Тамагочи-лоадер встроен inline (`?raw` + `unsafeSVG`) — больше нет внешней загрузки SVG по сети в критичный момент старта сессии.
+  - SVG-анимация переписана на `opacity/transform` (без `display` в keyframes) + fallback кадр и `prefers-reduced-motion`.
+  - Увеличен reconnect grace-период (`30s`), во время первого ответа после онбординга suppressed callout'ы `lost/disconnected`.
+  - Reconnect-плашка переведена в overlay-режим (не участвует в потоке layout) — убраны дёргания контента.
+  - Контролы чата (`Статус`, выбор сессии, refresh/brain/focus) перенесены из body чата в глобальный topbar к theme toggle; в самом окне чата остаётся только чат.
+  - Подпись вкладки чата очищена от упоминания gateway: `Прямой чат для быстрых задач.`
+  - Удалён внешний `@import` Google Fonts из UI-темы (меньше сетевых ошибок вида `ERR_CONNECTION_RESET` в консоли).
 
 **Текущий статус после фикса**
 - Запуск через `yagent-onboard-ui.command`: работает.

@@ -54,6 +54,8 @@ type GatewayHost = {
   refreshSessionsAfterChat: Set<string>;
   execApprovalQueue: ExecApprovalRequest[];
   execApprovalError: string | null;
+  markChatReconnectGracePeriod?: () => void;
+  clearChatReconnectGracePeriod?: () => void;
 };
 
 type SessionDefaultsSnapshot = {
@@ -170,6 +172,7 @@ export function connectGateway(host: GatewayHost) {
     onHello: (hello) => {
       host.connected = true;
       host.lastError = null;
+      host.clearChatReconnectGracePeriod?.();
       host.hello = hello;
       applySnapshot(host, hello);
       // Reset orphaned chat run state from before disconnect.
@@ -186,6 +189,7 @@ export function connectGateway(host: GatewayHost) {
     },
     onClose: ({ code, reason }) => {
       host.connected = false;
+      host.markChatReconnectGracePeriod?.();
       // Code 1012 = Service Restart (expected during config saves, don't show as error)
       if (code !== 1012) {
         host.lastError = `disconnected (${code}): ${reason || "no reason"}`;
