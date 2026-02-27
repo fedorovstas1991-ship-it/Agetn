@@ -1,14 +1,55 @@
-# Tools
+# TOOLS.md - Tool Configuration & Notes
 
-## Веб-поиск: one-search MCP
+> Document tool-specific configurations, gotchas, and credentials here.
 
-У тебя подключён MCP-сервер **one-search** для веб-поиска. Он работает через DuckDuckGo и **не требует API-ключа**.
+---
 
-**Как использовать:** вызывай инструменты, предоставленные MCP-сервером `one-search`, когда пользователь просит найти информацию в интернете, узнать актуальные данные или проверить факты.
+## Credentials Location
 
-**Важно:**
-- Сервер `one-search` — это npm-пакет `one-search-mcp` (https://www.npmjs.com/package/one-search-mcp). Он существует и работает. Не ищи альтернативы и не сомневайся в его наличии.
-- Провайдер поиска: DuckDuckGo (бесплатный, без ключей).
-- Brave API, Perplexity, Grok и другие платные провайдеры НЕ нужны.
-- Не пытайся устанавливать `@modelcontextprotocol/server-brave` или другие MCP-серверы для поиска — `one-search` уже настроен и готов к работе.
-- Если инструменты one-search не появляются в списке доступных, сообщи пользователю — возможно, MCP-сервер не успел запуститься. Но никогда не говори, что он "не существует".
+All credentials stored in `.credentials/` (gitignored):
+- `example-api.txt` — Example API key
+
+---
+
+## [Tool Name]
+
+**Status:** ✅ Working | ⚠️ Issues | ❌ Not configured
+
+**Configuration:**
+```
+Key details about how this tool is configured
+```
+
+**Gotchas:**
+- Things that don't work as expected
+- Workarounds discovered
+
+**Common Operations:**
+```bash
+# Example command
+tool-name --common-flag
+```
+
+---
+
+## Writing Preferences
+
+[Document any preferences about writing style, voice, etc.]
+
+---
+
+## What Goes Here
+
+- Tool configurations and settings
+- Credential locations (not the credentials themselves!)
+- Gotchas and workarounds discovered
+- Common commands and patterns
+- Integration notes
+
+## Why Separate?
+
+Skills define *how* tools work. This file is for *your* specifics — the stuff that's unique to your setup.
+
+---
+
+*Add whatever helps you do your job. This is your cheat sheet.*

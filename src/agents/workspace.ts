@@ -29,6 +29,8 @@ export const DEFAULT_HEARTBEAT_FILENAME = "HEARTBEAT.md";
 export const DEFAULT_BOOTSTRAP_FILENAME = "BOOTSTRAP.md";
 export const DEFAULT_MEMORY_FILENAME = "MEMORY.md";
 export const DEFAULT_MEMORY_ALT_FILENAME = "memory.md";
+export const DEFAULT_SESSION_STATE_FILENAME = "SESSION-STATE.md";
+export const DEFAULT_ONBOARDING_FILENAME = "ONBOARDING.md";
 
 function stripFrontMatter(content: string): string {
   if (!content.startsWith("---")) {
@@ -66,7 +68,9 @@ export type WorkspaceBootstrapFileName =
   | typeof DEFAULT_HEARTBEAT_FILENAME
   | typeof DEFAULT_BOOTSTRAP_FILENAME
   | typeof DEFAULT_MEMORY_FILENAME
-  | typeof DEFAULT_MEMORY_ALT_FILENAME;
+  | typeof DEFAULT_MEMORY_ALT_FILENAME
+  | typeof DEFAULT_SESSION_STATE_FILENAME
+  | typeof DEFAULT_ONBOARDING_FILENAME;
 
 export type WorkspaceBootstrapFile = {
   name: WorkspaceBootstrapFileName;
@@ -136,6 +140,8 @@ export async function ensureAgentWorkspace(params?: {
   userPath?: string;
   heartbeatPath?: string;
   bootstrapPath?: string;
+  sessionStatePath?: string;
+  onboardingPath?: string;
 }> {
   const rawDir = params?.dir?.trim() ? params.dir.trim() : DEFAULT_AGENT_WORKSPACE_DIR;
   const dir = resolveUserPath(rawDir);
@@ -152,6 +158,8 @@ export async function ensureAgentWorkspace(params?: {
   const userPath = path.join(dir, DEFAULT_USER_FILENAME);
   const heartbeatPath = path.join(dir, DEFAULT_HEARTBEAT_FILENAME);
   const bootstrapPath = path.join(dir, DEFAULT_BOOTSTRAP_FILENAME);
+  const sessionStatePath = path.join(dir, DEFAULT_SESSION_STATE_FILENAME);
+  const onboardingPath = path.join(dir, DEFAULT_ONBOARDING_FILENAME);
 
   const isBrandNewWorkspace = await (async () => {
     const paths = [agentsPath, soulPath, toolsPath, identityPath, userPath, heartbeatPath];
@@ -175,6 +183,8 @@ export async function ensureAgentWorkspace(params?: {
   const userTemplate = await loadTemplate(DEFAULT_USER_FILENAME);
   const heartbeatTemplate = await loadTemplate(DEFAULT_HEARTBEAT_FILENAME);
   const bootstrapTemplate = await loadTemplate(DEFAULT_BOOTSTRAP_FILENAME);
+  const sessionStateTemplate = await loadTemplate(DEFAULT_SESSION_STATE_FILENAME);
+  const onboardingTemplate = await loadTemplate(DEFAULT_ONBOARDING_FILENAME);
 
   await writeFileIfMissing(agentsPath, agentsTemplate);
   await writeFileIfMissing(soulPath, soulTemplate);
@@ -182,9 +192,24 @@ export async function ensureAgentWorkspace(params?: {
   await writeFileIfMissing(identityPath, identityTemplate);
   await writeFileIfMissing(userPath, userTemplate);
   await writeFileIfMissing(heartbeatPath, heartbeatTemplate);
+  await writeFileIfMissing(sessionStatePath, sessionStateTemplate);
   if (isBrandNewWorkspace) {
     await writeFileIfMissing(bootstrapPath, bootstrapTemplate);
+    await writeFileIfMissing(onboardingPath, onboardingTemplate);
   }
+
+  // Create memory/ and notes/ directories for proactive agent architecture
+  const memoryDir = path.join(dir, "memory");
+  const notesDir = path.join(dir, "notes");
+  await fs.mkdir(memoryDir, { recursive: true });
+  await fs.mkdir(notesDir, { recursive: true });
+
+  // Create .gitkeep files to ensure directories are tracked
+  const memoryGitkeep = path.join(memoryDir, ".gitkeep");
+  const notesGitkeep = path.join(notesDir, ".gitkeep");
+  await writeFileIfMissing(memoryGitkeep, "# Daily notes go here (YYYY-MM-DD.md)\n");
+  await writeFileIfMissing(notesGitkeep, "# Topic notes go here (PARA structure)\n");
+
   await ensureGitRepo(dir, isBrandNewWorkspace);
 
   return {
@@ -196,6 +221,8 @@ export async function ensureAgentWorkspace(params?: {
     userPath,
     heartbeatPath,
     bootstrapPath,
+    sessionStatePath,
+    onboardingPath,
   };
 }
 
@@ -271,6 +298,14 @@ export async function loadWorkspaceBootstrapFiles(dir: string): Promise<Workspac
       name: DEFAULT_BOOTSTRAP_FILENAME,
       filePath: path.join(resolvedDir, DEFAULT_BOOTSTRAP_FILENAME),
     },
+    {
+      name: DEFAULT_SESSION_STATE_FILENAME,
+      filePath: path.join(resolvedDir, DEFAULT_SESSION_STATE_FILENAME),
+    },
+    {
+      name: DEFAULT_ONBOARDING_FILENAME,
+      filePath: path.join(resolvedDir, DEFAULT_ONBOARDING_FILENAME),
+    },
   ];
 
   entries.push(...(await resolveMemoryBootstrapEntries(resolvedDir)));
@@ -292,7 +327,11 @@ export async function loadWorkspaceBootstrapFiles(dir: string): Promise<Workspac
   return result;
 }
 
-const SUBAGENT_BOOTSTRAP_ALLOWLIST = new Set([DEFAULT_AGENTS_FILENAME, DEFAULT_TOOLS_FILENAME]);
+const SUBAGENT_BOOTSTRAP_ALLOWLIST = new Set([
+  DEFAULT_AGENTS_FILENAME,
+  DEFAULT_TOOLS_FILENAME,
+  DEFAULT_SESSION_STATE_FILENAME,
+]);
 
 export function filterBootstrapFilesForSession(
   files: WorkspaceBootstrapFile[],
