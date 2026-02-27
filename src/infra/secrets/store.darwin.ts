@@ -45,7 +45,7 @@ function runSecurity(execImpl: ExecFileSyncFn, args: string[]): string {
 }
 
 export function createDarwinSecretStore(params?: { execFileSync?: ExecFileSyncFn }): SecretStore {
-  const execImpl = params?.execFileSync ?? execFileSync;
+  const execImpl = (params?.execFileSync ?? execFileSync) as ExecFileSyncFn;
   return {
     backend: "darwin-keychain",
     available: true,

@@ -64,7 +64,7 @@ function externalizeValue(value: unknown, store: SecretStore, pathSegments: stri
         continue;
       }
       const ref = buildConfigSecretRef(pathSegments, key);
-      store.set(ref, nested.trim());
+      store.set(ref, (nested as string).trim());
       output[key] = ref;
       continue;
     }

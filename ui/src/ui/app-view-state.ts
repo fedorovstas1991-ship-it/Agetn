@@ -30,6 +30,7 @@ import {
   LogLevel,
   LogEntry,
   McpServer,
+  UserSecret,
 } from "./types.ts";
 import { PresenceEntry } from "./types.ts";
 import { ChatAttachment, ChatQueueItem, CronFormState, CronWizardState } from "./ui-types.ts";
@@ -270,6 +271,16 @@ export class AppViewState {
   mcpLoading: boolean = false;
   mcpServers: McpServer[] = [];
   mcpError: string | null = null;
+  secretsLoading: boolean = false;
+  secrets: UserSecret[] = [];
+  secretsError: string | null = null;
+  secretsAddFormOpen: boolean = false;
+  secretsAddFormName: string = "";
+  secretsAddFormValue: string = "";
+  secretsAddFormShowValue: boolean = false;
+  secretsAddFormError: string | null = null;
+  secretsAddFormSaving: boolean = false;
+  secretsRevealedSecrets: Record<string, string | null> = {};
   productCreateSkillOpen: boolean = false;
   productCreateSkillId: string = "";
   productCreateSkillName: string = "";
@@ -1593,5 +1604,101 @@ export async function run(ctx: any, args: any) {
     if ((this as any).productLoadAgents) {
       return (this as any).productLoadAgents();
     }
+  };
+
+  _handleSecretsRefresh = async () => {
+    if (!this.client) return;
+    this.secretsLoading = true;
+    this.secretsError = null;
+    try {
+      const result = await this.client.request<{ secrets: UserSecret[] }>("secrets.list", {});
+      this.secrets = result.secrets;
+    } catch (err) {
+      this.secretsError = String(err);
+      this.secrets = [];
+    } finally {
+      this.secretsLoading = false;
+    }
+  };
+
+  _handleSecretsAddOpen = () => {
+    this.secretsAddFormOpen = true;
+    this.secretsAddFormName = "";
+    this.secretsAddFormValue = "";
+    this.secretsAddFormShowValue = false;
+    this.secretsAddFormError = null;
+    this.secretsAddFormSaving = false;
+  };
+
+  _handleSecretsAddCancel = () => {
+    this.secretsAddFormOpen = false;
+  };
+
+  _handleSecretsAddNameChange = (v: string) => {
+    this.secretsAddFormName = v;
+  };
+
+  _handleSecretsAddValueChange = (v: string) => {
+    this.secretsAddFormValue = v;
+  };
+
+  _handleSecretsAddToggleShow = () => {
+    this.secretsAddFormShowValue = !this.secretsAddFormShowValue;
+  };
+
+  _handleSecretsAddSave = async () => {
+    if (!this.client) return;
+    const name = this.secretsAddFormName.trim();
+    const value = this.secretsAddFormValue.trim();
+    if (!name) {
+      this.secretsAddFormError = "Имя не может быть пустым";
+      return;
+    }
+    if (!value) {
+      this.secretsAddFormError = "Значение не может быть пустым";
+      return;
+    }
+    this.secretsAddFormSaving = true;
+    this.secretsAddFormError = null;
+    try {
+      await this.client.request("secrets.set", { name, value });
+      this.secretsAddFormOpen = false;
+      void this._handleSecretsRefresh();
+    } catch (err) {
+      this.secretsAddFormError = String(err);
+    } finally {
+      this.secretsAddFormSaving = false;
+    }
+  };
+
+  _handleSecretsDelete = async (name: string) => {
+    if (!this.client) return;
+    try {
+      await this.client.request("secrets.delete", { name });
+      void this._handleSecretsRefresh();
+    } catch (err) {
+      sendAppEvent({ type: "error", message: `Ошибка удаления секрета: ${err}` });
+    }
+  };
+
+  _handleSecretsReveal = async (name: string) => {
+    if (!this.client) return;
+    try {
+      const result = await this.client.request<{ value: string }>("secrets.get", { name });
+      this.secretsRevealedSecrets = { ...this.secretsRevealedSecrets, [name]: result.value };
+      setTimeout(() => {
+        const updated = { ...this.secretsRevealedSecrets };
+        delete updated[name];
+        this.secretsRevealedSecrets = updated;
+      }, 10_000);
+    } catch (err) {
+      sendAppEvent({ type: "error", message: `Ошибка раскрытия секрета: ${err}` });
+    }
+  };
+
+  _handleSecretsHide = (name: string) => {
+    const updated = { ...this.secretsRevealedSecrets };
+    delete updated[name];
+    this.secretsRevealedSecrets = updated;
   };
 }
