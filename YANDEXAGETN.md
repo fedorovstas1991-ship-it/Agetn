@@ -1,6 +1,6 @@
 # YAgent: текущий статус и бэклог
 
-Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md, inline tamagotchi loader + кроссбраузерная SVG-анимация, перенос chat controls в topbar рядом с переключателем темы)
+Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md, inline tamagotchi loader + кроссбраузерная SVG-анимация, перенос chat controls в topbar рядом с переключателем темы, глобальная замена tamagotchi-loader на Loader V2 во всех SVG-копиях, merge PR #3)
 
 ## Текущие фичи (реализовано)
 - Product UI и основная навигация русифицированы (кроме `Docs`).
@@ -56,6 +56,12 @@
   - Telegram-панель разделена: отдельные секции «Обычный» и «NDA» — каждый агент может иметь своего бота.
   - Конфиг NDA-бота: `channels.telegram.accounts.nda` + binding `agentId: nda → accountId: nda`.
   - NDA Telegram CTA показывается только если NDA-бот не настроен (проверяет `channels.telegram.accounts.nda.botToken`).
+- **Секретница (2026-02-27):** вкладка «Секреты» для безопасного хранения API-ключей и токенов.
+  - Значения хранятся в macOS Keychain (`secret://ya/user-secrets/<NAME>`), метаданные в `~/.YA-yagent/user-secrets.json`.
+  - CRUD через UI: список с маскированным значением (показать полностью на 10 сек → автоскрытие), добавление, удаление.
+  - Gateway handlers: `secrets.list`, `secrets.set`, `secrets.delete`, `secrets.get`.
+  - Агент знает как просить пользователя создать секрет (через `TOOLS.md` bootstrap) и ждать подтверждения.
+  - Куда править: `src/infra/secrets/user-secrets.ts`, `src/gateway/server-methods/secrets.ts`, `ui/src/ui/views/secrets.ts`, `ui/src/ui/controllers/secrets.ts`.
 
 ## Текущее поведение модели
 - Базовая модель (main): `openrouter/moonshotai/kimi-k2.5`.
@@ -192,6 +198,14 @@
   - Контролы чата (`Статус`, выбор сессии, refresh/brain/focus) перенесены из body чата в глобальный topbar к theme toggle; в самом окне чата остаётся только чат.
   - Подпись вкладки чата очищена от упоминания gateway: `Прямой чат для быстрых задач.`
   - Удалён внешний `@import` Google Fonts из UI-темы (меньше сетевых ошибок вида `ERR_CONNECTION_RESET` в консоли).
+
+**UI: глобальная замена Tamagotchi SVG на Loader V2 (2026-02-27)**
+- **Файлы:** `ui/src/ui/assets/tamagotchi-loader.svg`, `ui/public/loaders/tamagotchi-loader.svg`, `ui/src/ui/chat/tamagotchi-loader-svg.node.test.ts`.
+- **Что сделано:**
+  - Обе копии `tamagotchi-loader.svg` заменены на новый `loader_v2` (единая анимация 4s с фазами egg/crack/burst/creature, `step-end`, `prefers-reduced-motion`).
+  - Добавлены CSS-переменные темы в SVG: `--loader-ink`, `--loader-shell`, `--loader-accent`.
+  - Добавлен node-тест, который проверяет, что оба SVG-файла синхронизированы и содержат маркеры Loader V2.
+- **Интеграция:** PR #3 смержен в `main`, merge commit `e497062`.
 
 **Текущий статус после фикса**
 - Запуск через `yagent-onboard-ui.command`: работает.
