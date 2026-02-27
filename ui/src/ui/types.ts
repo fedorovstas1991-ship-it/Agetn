@@ -858,3 +858,12 @@ export type McpServer = {
 export type McpListResult = {
   servers: McpServer[];
 };
+
+export type UserSecret = {
+  name: string;
+  createdAt: string;
+};
+
+export type SecretsListResult = {
+  secrets: UserSecret[];
+};
