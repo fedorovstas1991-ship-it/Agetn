@@ -79,6 +79,7 @@ import { renderGatewayUrlConfirmation } from "./views/gateway-url-confirmation.t
 import { renderInstances } from "./views/instances.ts";
 import { renderLogs } from "./views/logs.ts";
 import { renderMcp } from "./views/mcp.ts";
+import { renderSecrets } from "./views/secrets.ts";
 import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
@@ -1093,6 +1094,32 @@ export function renderApp(state: AppViewState) {
         error: state.mcpError,
         onRefresh: () => void loadMcpServers(state as any),
         onAddNew: () => state.handleMcpAddNew(),
+      })
+      : nothing
+    }
+
+        ${state.tab === "secrets"
+      ? renderSecrets({
+        loading: state.secretsLoading,
+        secrets: state.secrets,
+        error: state.secretsError,
+        addFormOpen: state.secretsAddFormOpen,
+        addFormName: state.secretsAddFormName,
+        addFormValue: state.secretsAddFormValue,
+        addFormShowValue: state.secretsAddFormShowValue,
+        addFormError: state.secretsAddFormError,
+        addFormSaving: state.secretsAddFormSaving,
+        revealedSecrets: state.secretsRevealedSecrets,
+        onRefresh: () => state._handleSecretsRefresh(),
+        onAddOpen: () => state._handleSecretsAddOpen(),
+        onAddCancel: () => state._handleSecretsAddCancel(),
+        onAddNameChange: (v) => state._handleSecretsAddNameChange(v),
+        onAddValueChange: (v) => state._handleSecretsAddValueChange(v),
+        onAddToggleShow: () => state._handleSecretsAddToggleShow(),
+        onAddSave: () => state._handleSecretsAddSave(),
+        onDelete: (name) => state._handleSecretsDelete(name),
+        onReveal: (name) => state._handleSecretsReveal(name),
+        onHide: (name) => state._handleSecretsHide(name),
       })
       : nothing
     }

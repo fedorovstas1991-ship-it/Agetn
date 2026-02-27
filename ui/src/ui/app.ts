@@ -30,7 +30,14 @@ import type {
   NostrProfile,
   McpServer,
 } from "./types.ts";
+import type { UserSecret } from "./types.ts";
 import { loadMcpServers } from "./controllers/mcp.ts";
+import {
+  loadSecrets,
+  saveSecret,
+  deleteSecret,
+  revealSecret,
+} from "./controllers/secrets.ts";
 import type { WizardStep } from "./types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import { normalizeAgentId, parseAgentSessionKey } from "../../../src/routing/session-key.js";
@@ -496,6 +503,17 @@ export class OpenClawApp extends LitElement {
   @state() mcpServers: McpServer[] = [];
   @state() mcpError: string | null = null;
 
+  @state() secretsLoading = false;
+  @state() secrets: UserSecret[] = [];
+  @state() secretsError: string | null = null;
+  @state() secretsAddFormOpen = false;
+  @state() secretsAddFormName = "";
+  @state() secretsAddFormValue = "";
+  @state() secretsAddFormShowValue = false;
+  @state() secretsAddFormError: string | null = null;
+  @state() secretsAddFormSaving = false;
+  @state() secretsRevealedSecrets: Record<string, string | null> = {};
+
   @state() debugLoading = false;
   @state() debugStatus: StatusSummary | null = null;
   @state() debugHealth: HealthSnapshot | null = null;
@@ -616,6 +634,9 @@ export class OpenClawApp extends LitElement {
     if (changed.has("tab") && this.tab === "mcp") {
       void this.loadMcp();
     }
+    if (changed.has("tab") && this.tab === "secrets") {
+      loadSecrets(this).then(() => this.requestUpdate());
+    }
   }
 
   connect() {
@@ -689,6 +710,52 @@ export class OpenClawApp extends LitElement {
     this.chatMessage = "Подключи новый MCP-сервер";
     this.setTab("chat");
     setTimeout(() => void this.handleSendChat(), 100);
+  }
+
+  _handleSecretsRefresh() { loadSecrets(this).then(() => this.requestUpdate()); }
+  _handleSecretsAddOpen() { this.secretsAddFormOpen = true; this.secretsAddFormError = null; this.requestUpdate(); }
+  _handleSecretsAddCancel() { this.secretsAddFormOpen = false; this.secretsAddFormName = ""; this.secretsAddFormValue = ""; this.requestUpdate(); }
+  _handleSecretsAddNameChange(v: string) { this.secretsAddFormName = v; this.requestUpdate(); }
+  _handleSecretsAddValueChange(v: string) { this.secretsAddFormValue = v; this.requestUpdate(); }
+  _handleSecretsAddToggleShow() { this.secretsAddFormShowValue = !this.secretsAddFormShowValue; this.requestUpdate(); }
+  async _handleSecretsAddSave() {
+    if (!this.client) return;
+    this.secretsAddFormSaving = true;
+    this.secretsAddFormError = null;
+    this.requestUpdate();
+    try {
+      await saveSecret(this.client, this.secretsAddFormName, this.secretsAddFormValue);
+      this.secretsAddFormOpen = false;
+      this.secretsAddFormName = "";
+      this.secretsAddFormValue = "";
+      await loadSecrets(this);
+    } catch (err) {
+      this.secretsAddFormError = String(err);
+    } finally {
+      this.secretsAddFormSaving = false;
+      this.requestUpdate();
+    }
+  }
+  async _handleSecretsDelete(name: string) {
+    if (!this.client) return;
+    if (!confirm(`Удалить секрет ${name}?`)) return;
+    await deleteSecret(this.client, name);
+    await loadSecrets(this);
+    this.requestUpdate();
+  }
+  async _handleSecretsReveal(name: string) {
+    if (!this.client) return;
+    const value = await revealSecret(this.client, name);
+    this.secretsRevealedSecrets = { ...this.secretsRevealedSecrets, [name]: value };
+    this.requestUpdate();
+    setTimeout(() => {
+      this.secretsRevealedSecrets = { ...this.secretsRevealedSecrets, [name]: null };
+      this.requestUpdate();
+    }, 10000);
+  }
+  _handleSecretsHide(name: string) {
+    this.secretsRevealedSecrets = { ...this.secretsRevealedSecrets, [name]: null };
+    this.requestUpdate();
   }
 
   async handleAbortChat() {
