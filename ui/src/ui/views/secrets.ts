@@ -118,16 +118,15 @@ function renderAddForm(props: SecretsProps) {
 function renderSecretRow(secret: UserSecret, props: SecretsProps) {
   const revealed = props.revealedSecrets[secret.name];
   const date = new Date(secret.createdAt).toLocaleDateString("ru-RU");
-  const maskedDisplay = revealed && revealed.length > 2
-    ? "••••••" + revealed.slice(-2)
-    : "••••••••";
+  // Show full value when revealed, masked otherwise
+  const displayValue = revealed ?? "••••••••";
 
   return html`
     <div class="list-item">
       <div class="list-main">
         <div class="list-title" style="font-family: monospace;">${secret.name}</div>
         <div class="muted" style="font-size: 0.85em; margin-top: 2px;">
-          <span style="font-family: monospace;">${revealed ? maskedDisplay : "••••••••"}</span>
+          <span style="font-family: monospace;">${displayValue}</span>
           &nbsp;·&nbsp; Создан ${date}
         </div>
       </div>

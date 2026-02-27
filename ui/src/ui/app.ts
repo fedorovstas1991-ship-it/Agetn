@@ -29,8 +29,8 @@ import type {
   StatusSummary,
   NostrProfile,
   McpServer,
+  UserSecret,
 } from "./types.ts";
-import type { UserSecret } from "./types.ts";
 import { loadMcpServers } from "./controllers/mcp.ts";
 import {
   loadSecrets,
@@ -739,8 +739,12 @@ export class OpenClawApp extends LitElement {
   async _handleSecretsDelete(name: string) {
     if (!this.client) return;
     if (!confirm(`Удалить секрет ${name}?`)) return;
-    await deleteSecret(this.client, name);
-    await loadSecrets(this);
+    try {
+      await deleteSecret(this.client, name);
+      await loadSecrets(this);
+    } catch (err) {
+      this.secretsError = String(err);
+    }
     this.requestUpdate();
   }
   async _handleSecretsReveal(name: string) {
