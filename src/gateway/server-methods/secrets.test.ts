@@ -98,6 +98,12 @@ describe("secrets.delete", () => {
     expect(get().success).toBe(true);
     expect(get().data.ok).toBe(true);
   });
+
+  test("returns error on invalid name", async () => {
+    const { respond, get } = makeRespond();
+    await secretsHandlers["secrets.delete"]({ params: { name: "" }, respond, context: {} } as any);
+    expect(get().success).toBe(false);
+  });
 });
 
 describe("secrets.get", () => {
@@ -121,6 +127,12 @@ describe("secrets.get", () => {
       respond,
       context: {},
     } as any);
+    expect(get().success).toBe(false);
+  });
+
+  test("returns error on invalid name", async () => {
+    const { respond, get } = makeRespond();
+    await secretsHandlers["secrets.get"]({ params: { name: "invalid!" }, respond, context: {} } as any);
     expect(get().success).toBe(false);
   });
 });

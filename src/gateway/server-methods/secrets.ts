@@ -47,6 +47,10 @@ export const secretsHandlers: GatewayRequestHandlers = {
 
   "secrets.delete": async ({ params, respond }) => {
     const { name } = params as { name: string };
+    if (!name || !NAME_REGEX.test(name)) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "Secret name must be uppercase letters, digits and underscores only"));
+      return;
+    }
     try {
       await deleteUserSecret(name, STATE_DIR);
       respond(true, { ok: true }, undefined);
@@ -57,7 +61,12 @@ export const secretsHandlers: GatewayRequestHandlers = {
 
   "secrets.get": async ({ params, respond }) => {
     const { name } = params as { name: string };
+    if (!name || !NAME_REGEX.test(name)) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "Secret name must be uppercase letters, digits and underscores only"));
+      return;
+    }
     try {
+      // getUserSecretValue is synchronous
       const value = getUserSecretValue(name);
       if (value === null) {
         respond(
