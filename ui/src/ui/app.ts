@@ -161,6 +161,17 @@ const ONBOARDING_WELCOME_MESSAGE = "Привет! Что ты умеешь?";
 const ONBOARDING_WELCOME_INITIAL_DELAY_MS = 1_000;
 const ONBOARDING_WELCOME_RETRY_DELAY_MS = 1_200;
 const ONBOARDING_WELCOME_MAX_ATTEMPTS = 5;
+const CHAT_RECONNECT_GRACE_MS = 30_000;
+
+function hasAssistantMessage(messages: unknown[]): boolean {
+  return messages.some((message) => {
+    if (!message || typeof message !== "object") {
+      return false;
+    }
+    const role = (message as { role?: unknown }).role;
+    return typeof role === "string" && role.trim().toLowerCase() === "assistant";
+  });
+}
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -279,6 +290,7 @@ export class OpenClawApp extends LitElement {
   private onboardingWelcomePendingMessage: string | null = null;
   private onboardingWelcomeRetryTimer: number | null = null;
   private onboardingWelcomeSendAttempts = 0;
+  private chatConnectionGraceTimer: number | null = null;
 
   @state() assistantName = injectedAssistantIdentity.name;
   @state() assistantAvatar = injectedAssistantIdentity.avatar;
@@ -300,6 +312,8 @@ export class OpenClawApp extends LitElement {
   @state() chatAttachments: ChatAttachment[] = [];
   @state() chatManualRefreshInFlight = false;
   @state() chatFirstGreetingCtaDismissedSessionKey: string | null = null;
+  @state() onboardingFirstResponsePending = false;
+  @state() chatConnectionGraceActive = false;
   @state() onboardingWizardSessionId: string | null = null;
   @state() onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
   @state() onboardingWizardStep: WizardStep | null = null;
@@ -548,14 +562,23 @@ export class OpenClawApp extends LitElement {
   disconnectedCallback() {
     handleDisconnected(this as unknown as Parameters<typeof handleDisconnected>[0]);
     this.clearOnboardingWelcomeRetryTimer();
+    this.clearChatReconnectGracePeriod();
     window.removeEventListener("keydown", this.handleKeyDown.bind(this)); // Add this line
     super.disconnectedCallback();
   }
 
   protected updated(changed: Map<PropertyKey, unknown>) {
     handleUpdated(this as unknown as Parameters<typeof handleUpdated>[0], changed);
+    const connectedChanged = changed.has("connected");
+    if (connectedChanged) {
+      const prevConnected = Boolean(changed.get("connected"));
+      if (this.connected && !prevConnected) {
+        this.clearChatReconnectGracePeriod();
+      } else if (!this.connected && prevConnected) {
+        this.markChatReconnectGracePeriod();
+      }
+    }
     if (this.productMode) {
-      const connectedChanged = changed.has("connected");
       const agentsChanged = changed.has("agentsList");
       if ((connectedChanged || agentsChanged) && this.connected) {
         const parsedSession = parseAgentSessionKey(this.sessionKey);
@@ -582,6 +605,13 @@ export class OpenClawApp extends LitElement {
     }
     if (changed.has("connected") && this.connected && this.onboardingWelcomePendingMessage) {
       void this.trySendOnboardingWelcome();
+    }
+    if (
+      this.onboardingFirstResponsePending &&
+      changed.has("chatMessages") &&
+      hasAssistantMessage(this.chatMessages)
+    ) {
+      this.onboardingFirstResponsePending = false;
     }
     if (changed.has("tab") && this.tab === "mcp") {
       void this.loadMcp();
@@ -1792,6 +1822,32 @@ export class OpenClawApp extends LitElement {
     this.onboardingWelcomeRetryTimer = null;
   }
 
+  private clearChatConnectionGraceTimer() {
+    if (this.chatConnectionGraceTimer == null) {
+      return;
+    }
+    window.clearTimeout(this.chatConnectionGraceTimer);
+    this.chatConnectionGraceTimer = null;
+  }
+
+  private scheduleChatConnectionGraceExpiry() {
+    this.clearChatConnectionGraceTimer();
+    this.chatConnectionGraceTimer = window.setTimeout(() => {
+      this.chatConnectionGraceTimer = null;
+      this.chatConnectionGraceActive = false;
+    }, CHAT_RECONNECT_GRACE_MS);
+  }
+
+  clearChatReconnectGracePeriod() {
+    this.clearChatConnectionGraceTimer();
+    this.chatConnectionGraceActive = false;
+  }
+
+  markChatReconnectGracePeriod() {
+    this.chatConnectionGraceActive = true;
+    this.scheduleChatConnectionGraceExpiry();
+  }
+
   private scheduleOnboardingWelcomeRetry(delayMs: number) {
     this.clearOnboardingWelcomeRetryTimer();
     this.onboardingWelcomeRetryTimer = window.setTimeout(() => {
@@ -1804,6 +1860,7 @@ export class OpenClawApp extends LitElement {
     this.onboardingWelcomePendingMessage = ONBOARDING_WELCOME_MESSAGE;
     this.onboardingWelcomeSendAttempts = 0;
     this.chatMessage = ONBOARDING_WELCOME_MESSAGE;
+    this.onboardingFirstResponsePending = true;
     this.scheduleOnboardingWelcomeRetry(ONBOARDING_WELCOME_INITIAL_DELAY_MS);
   }
 
@@ -1817,6 +1874,7 @@ export class OpenClawApp extends LitElement {
     if (currentDraft && currentDraft !== pendingMessage) {
       this.onboardingWelcomePendingMessage = null;
       this.onboardingWelcomeSendAttempts = 0;
+      this.onboardingFirstResponsePending = false;
       this.clearOnboardingWelcomeRetryTimer();
       return;
     }
@@ -1829,6 +1887,7 @@ export class OpenClawApp extends LitElement {
     if (this.onboardingWelcomeSendAttempts >= ONBOARDING_WELCOME_MAX_ATTEMPTS) {
       this.onboardingWelcomePendingMessage = null;
       this.onboardingWelcomeSendAttempts = 0;
+      this.onboardingFirstResponsePending = false;
       this.clearOnboardingWelcomeRetryTimer();
       return;
     }

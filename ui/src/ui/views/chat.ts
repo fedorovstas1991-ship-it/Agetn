@@ -6,7 +6,8 @@ import type { ChatItem, MessageGroup } from "../types/chat-types.ts";
 import type { ChatAttachment, ChatQueueItem } from "../ui-types.ts";
 import {
   renderMessageGroup,
-  renderReadingIndicatorGroup,
+  renderReadingIndicatorGroupWithOptions,
+  renderTamagotchiLoader,
   renderStreamingGroup,
 } from "../chat/grouped-render.ts";
 import { normalizeMessage, normalizeRoleForGrouping } from "../chat/message-normalizer.ts";
@@ -42,6 +43,9 @@ export type ChatProps = {
   queue: ChatQueueItem[];
   connected: boolean;
   canSend: boolean;
+  basePath?: string;
+  connectionGraceActive?: boolean;
+  showOnboardingHeroLoader?: boolean;
   disabledReason: string | null;
   error: string | null;
   sessions: SessionsListResult | null;
@@ -399,6 +403,14 @@ export function renderChat(props: ChatProps) {
   const sidebarOpen = Boolean(props.sidebarOpen && props.onCloseSidebar);
   const showNdaTelegramCta = Boolean(props.showNdaTelegramCta);
   const showFirstGreetingCta = Boolean(props.showFirstGreetingCta) && !showNdaTelegramCta;
+  const streamIsEmpty = props.stream === null || props.stream.trim().length === 0;
+  const showOnboardingHeroLoader =
+    Boolean(props.showOnboardingHeroLoader) &&
+    streamIsEmpty;
+  const connectionGraceActive = Boolean(props.connectionGraceActive && !props.connected);
+  const shouldSuppressConnectionCallouts = connectionGraceActive || showOnboardingHeroLoader;
+  const effectiveDisabledReason = shouldSuppressConnectionCallouts ? null : props.disabledReason;
+  const effectiveError = shouldSuppressConnectionCallouts ? null : props.error;
   let filePickerEl: HTMLInputElement | null = null;
 
   const addFiles = (files: FileList | null) => {
@@ -452,7 +464,13 @@ export function renderChat(props: ChatProps) {
         }
 
         if (item.kind === "reading-indicator") {
-          return renderReadingIndicatorGroup(assistantIdentity);
+          if (showOnboardingHeroLoader) {
+            return nothing;
+          }
+          return renderReadingIndicatorGroupWithOptions(assistantIdentity, {
+            variant: "mini",
+            label: "Готовлю ответ…",
+          });
         }
 
         if (item.kind === "stream") {
@@ -476,14 +494,30 @@ export function renderChat(props: ChatProps) {
         return nothing;
       },
     )}
+      ${showOnboardingHeroLoader
+      ? renderReadingIndicatorGroupWithOptions(assistantIdentity, {
+        variant: "hero",
+        label: "Рождаем твоего YAgent…",
+        subtitle: "Поднимаю сессию и готовлю первый ответ",
+      })
+      : nothing}
     </div>
   `;
 
   return html`
     <section class="card chat chat--static" @drop=${handleDrop} @dragover=${handleDragOver}>
-      ${props.disabledReason ? html`<div class="callout">${props.disabledReason}</div>` : nothing}
+      ${connectionGraceActive
+      ? html`
+            <div class="chat-connection-grace" role="status" aria-live="polite">
+              ${renderTamagotchiLoader("mini")}
+              <span class="chat-connection-grace__text">Возвращаем связь с gateway…</span>
+            </div>
+          `
+      : nothing}
 
-      ${props.error ? html`<div class="callout danger">${props.error}</div>` : nothing}
+      ${effectiveDisabledReason ? html`<div class="callout">${effectiveDisabledReason}</div>` : nothing}
+
+      ${effectiveError ? html`<div class="callout danger">${effectiveError}</div>` : nothing}
       ${props.ndaModeError ? html`<div class="callout danger">${props.ndaModeError}</div>` : nothing}
 
       ${props.focusMode

@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 import type { AssistantIdentity } from "../assistant-identity.ts";
 import type { MessageGroup } from "../types/chat-types.ts";
 import { toSanitizedMarkdownHtml } from "../markdown.ts";
@@ -11,6 +12,7 @@ import {
 } from "./message-extract.ts";
 import { isToolResultMessage, normalizeRoleForGrouping } from "./message-normalizer.ts";
 import { extractToolCards, renderToolCardSidebar } from "./tool-cards.ts";
+import tamagotchiLoaderSvg from "../assets/tamagotchi-loader.svg?raw";
 
 type ImageBlock = {
   url: string;
@@ -55,14 +57,62 @@ function extractImages(message: unknown): ImageBlock[] {
 }
 
 export function renderReadingIndicatorGroup(assistant?: AssistantIdentity) {
+  return renderReadingIndicatorGroupWithOptions(assistant, {});
+}
+
+type ReadingIndicatorOptions = {
+  variant?: "mini" | "hero";
+  label?: string;
+  subtitle?: string;
+};
+
+export function renderTamagotchiLoader(variant: "mini" | "hero" = "mini") {
+  return html`
+    <span class="chat-tamagotchi-loader chat-tamagotchi-loader--${variant}" aria-hidden="true">
+      ${unsafeSVG(tamagotchiLoaderSvg)}
+    </span>
+  `;
+}
+
+export function renderReadingIndicatorGroupWithOptions(
+  assistant: AssistantIdentity | undefined,
+  options: ReadingIndicatorOptions,
+) {
+  const variant = options.variant ?? "mini";
+  const label =
+    options.label ??
+    (variant === "hero" ? "Рождаем твоего YAgent…" : "Готовлю ответ…");
+  const subtitle =
+    options.subtitle ??
+    (variant === "hero" ? "Поднимаю сессию и готовлю первый ответ" : "");
+  const loader = renderTamagotchiLoader(variant);
+
+  if (variant === "hero") {
+    return html`
+      <div class="chat-group assistant">
+        ${renderAvatar("assistant", assistant)}
+        <div class="chat-group-messages">
+          <div class="chat-bubble chat-reading-indicator chat-reading-indicator--hero">
+            ${loader}
+            <div class="chat-reading-indicator__hero-meta">
+              <div class="chat-reading-indicator__hero-title">${label}</div>
+              ${subtitle
+                ? html`<div class="chat-reading-indicator__hero-subtitle">${subtitle}</div>`
+                : nothing}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   return html`
     <div class="chat-group assistant">
       ${renderAvatar("assistant", assistant)}
       <div class="chat-group-messages">
-        <div class="chat-bubble chat-reading-indicator" aria-hidden="true">
-          <span class="chat-reading-indicator__dots">
-            <span></span><span></span><span></span>
-          </span>
+        <div class="chat-bubble chat-reading-indicator chat-reading-indicator--mini">
+          ${loader}
+          <span class="chat-reading-indicator__label">${label}</span>
         </div>
       </div>
     </div>

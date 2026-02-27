@@ -40,7 +40,7 @@ export function renderTab(state: AppViewState, tab: Tab) {
   `;
 }
 
-export function renderChatControls(state: AppViewState) {
+export function renderChatControls(state: AppViewState, placement: "content" | "topbar" = "content") {
   const mainSessionKey = resolveMainSessionKey(state.hello, state.sessionsResult);
   const sessionOptions = resolveSessionOptions(
     state.sessionKey,
@@ -51,6 +51,8 @@ export function renderChatControls(state: AppViewState) {
   const disableFocusToggle = state.onboarding;
   const showThinking = state.onboarding ? false : state.settings.chatShowThinking;
   const focusActive = state.onboarding ? true : state.settings.chatFocusMode;
+  const gatewayStatusText = state.connected ? RU_UI.healthOk : RU_UI.healthOffline;
+  const gatewayStatusLabel = `${RU_UI.health}: ${gatewayStatusText}`;
   // Refresh icon
   const refreshIcon = html`
     <svg
@@ -86,7 +88,14 @@ export function renderChatControls(state: AppViewState) {
     </svg>
   `;
   return html`
-    <div class="chat-controls">
+    <div class="chat-controls ${placement === "topbar" ? "chat-controls--topbar" : ""}">
+      <div
+        class="pill chat-controls__gateway ${state.connected ? "ok" : "danger"}"
+        title=${gatewayStatusLabel}
+      >
+        <span class="statusDot ${state.connected ? "ok" : ""}"></span>
+        <span class="chat-controls__gateway-text">${gatewayStatusLabel}</span>
+      </div>
       <label class="field chat-controls__session">
         <select
           .value=${state.sessionKey}

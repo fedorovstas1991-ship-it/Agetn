@@ -34,6 +34,9 @@ function createProps(overrides: Partial<ChatProps> = {}): ChatProps {
     canSend: true,
     disabledReason: null,
     error: null,
+    basePath: "",
+    connectionGraceActive: false,
+    showOnboardingHeroLoader: false,
     sessions: createSessions(),
     focusMode: false,
     assistantName: "OpenClaw",
@@ -168,8 +171,8 @@ describe("chat view", () => {
       container,
     );
 
-    expect(container.textContent).toContain("Подключить Telegram");
-    expect(container.textContent).toContain("Сформулировать в чате");
+    expect(container.textContent).toContain("Подключи Telegram");
+    expect(container.textContent).toContain("Подключить");
   });
 
   it("prioritizes NDA Telegram CTA when both CTA flags are enabled", () => {
@@ -195,5 +198,85 @@ describe("chat view", () => {
     const chatCard = container.querySelector("section.chat");
     expect(chatCard).not.toBeNull();
     expect(chatCard?.classList.contains("chat--static")).toBe(true);
+  });
+
+  it("shows mini tamagotchi loader during reconnect grace and hides error callout", () => {
+    const container = document.createElement("div");
+    render(
+      renderChat(
+        createProps({
+          connected: false,
+          connectionGraceActive: true,
+          error: "disconnected (1006): no reason",
+        }),
+      ),
+      container,
+    );
+
+    expect(container.querySelector(".chat-tamagotchi-loader--mini")).not.toBeNull();
+    expect(container.querySelector(".callout.danger")).toBeNull();
+  });
+
+  it("shows hero tamagotchi loader while waiting for first onboarding response", () => {
+    const container = document.createElement("div");
+    render(
+      renderChat(
+        createProps({
+          showOnboardingHeroLoader: true,
+          sending: true,
+          messages: [{ role: "user", content: [{ type: "text", text: "Привет" }] }],
+          stream: "",
+        }),
+      ),
+      container,
+    );
+
+    expect(container.querySelector(".chat-tamagotchi-loader--hero")).not.toBeNull();
+  });
+
+  it("shows hero tamagotchi loader even when prior assistant messages exist", () => {
+    const container = document.createElement("div");
+    render(
+      renderChat(
+        createProps({
+          showOnboardingHeroLoader: true,
+          messages: [
+            {
+              role: "assistant",
+              content: [{ type: "text", text: "Старое сообщение" }],
+            },
+            { role: "user", content: [{ type: "text", text: "Привет" }] },
+          ],
+          stream: "",
+          sending: true,
+        }),
+      ),
+      container,
+    );
+
+    expect(container.querySelector(".chat-tamagotchi-loader--hero")).not.toBeNull();
+  });
+
+  it("keeps hero loader and suppresses callouts while onboarding response is pending", () => {
+    const container = document.createElement("div");
+    render(
+      renderChat(
+        createProps({
+          connected: false,
+          connectionGraceActive: false,
+          showOnboardingHeroLoader: true,
+          sending: false,
+          loading: false,
+          stream: "",
+          disabledReason: "Подключись к gateway, чтобы начать чат...",
+          error: "disconnected (1006): no reason",
+        }),
+      ),
+      container,
+    );
+
+    expect(container.querySelector(".chat-tamagotchi-loader--hero")).not.toBeNull();
+    expect(container.querySelector(".callout")).toBeNull();
+    expect(container.querySelector(".callout.danger")).toBeNull();
   });
 });
