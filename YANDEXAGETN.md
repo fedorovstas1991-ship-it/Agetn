@@ -1,6 +1,6 @@
 # YAgent: текущий статус и бэклог
 
-Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md, inline tamagotchi loader + кроссбраузерная SVG-анимация, перенос chat controls в topbar рядом с переключателем темы, глобальная замена tamagotchi-loader на Loader V2 во всех SVG-копиях, merge PR #3)
+Обновлено: 2026-02-27 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс зависания NDA-сессии в tool-loop, вынос runtime-артефактов из папки проекта, фикс порядка reset/build в onboard launcher, bootstrap-знание о one-search MCP для агента, fallback web_search на DuckDuckGo без Brave key, дефолт browser open -> profile=openclaw, фикс дёргания chat card при hover после онбординга, фикс автоотправки приветствия после онбординга при reconnect gateway, повторная проверка fresh onboarding, фикс mcp.list TypeError context.loadConfig, инструкции подключения MCP в bootstrap TOOLS.md, inline tamagotchi loader + кроссбраузерная SVG-анимация, перенос chat controls в topbar рядом с переключателем темы, глобальная замена tamagotchi-loader на Loader V2 во всех SVG-копиях, merge PR #3, Секретница — вкладка «Секреты» с Keychain-хранилищем, фикс 4 TS-ошибок в secrets: NOT_FOUND в ErrorCodes, cast execFileSync, nested as string, AppViewState secrets fields)
 
 ## Текущие фичи (реализовано)
 - Product UI и основная навигация русифицированы (кроме `Docs`).
@@ -62,6 +62,7 @@
   - Gateway handlers: `secrets.list`, `secrets.set`, `secrets.delete`, `secrets.get`.
   - Агент знает как просить пользователя создать секрет (через `TOOLS.md` bootstrap) и ждать подтверждения.
   - Куда править: `src/infra/secrets/user-secrets.ts`, `src/gateway/server-methods/secrets.ts`, `ui/src/ui/views/secrets.ts`, `ui/src/ui/controllers/secrets.ts`.
+  - **Фикс TS (2026-02-27):** `ErrorCodes.NOT_FOUND` добавлен в `error-codes.ts`; `execFileSync` кастится в `ExecFileSyncFn` в `store.darwin.ts`; `(nested as string).trim()` в `config/secrets.ts` (тип сужался до `never` после `isSecretRef` type predicate); поля `secretsLoading/secrets/secretsRevealedSecrets` и методы `_handleSecrets*` добавлены в `AppViewState` (`app-view-state.ts`).
 
 ## Текущее поведение модели
 - Базовая модель (main): `openrouter/moonshotai/kimi-k2.5`.
@@ -501,3 +502,5 @@ brew install ollama
 - Онбординг/пресеты: `src/onboarding/*`, `yagent-onboard-ui.command`
 - MCP вкладка/handler: `ui/src/ui/views/mcp.ts`, `ui/src/ui/controllers/mcp.ts`, `src/gateway/server-methods/mcp.ts`
 - Bootstrap-знание агента об инструментах: `docs/reference/templates/TOOLS.md`
+- Секретница (Keychain): `src/infra/secrets/user-secrets.ts`, `src/infra/secrets/store.darwin.ts`, `src/gateway/server-methods/secrets.ts`, `ui/src/ui/views/secrets.ts`, `ui/src/ui/controllers/secrets.ts`
+- ErrorCodes (gateway protocol): `src/gateway/protocol/schema/error-codes.ts`
