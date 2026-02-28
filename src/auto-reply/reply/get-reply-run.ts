@@ -52,6 +52,42 @@ type ExecOverrides = Pick<ExecToolDefaults, "host" | "security" | "ask" | "node"
 const BARE_SESSION_RESET_PROMPT =
   "A new session was started via /new or /reset. Greet the user in your configured persona (Yandex Agent), if one is provided. Be yourself - use your defined voice, mannerisms, and mood. Keep it to 1-3 sentences and ask what they want to do. If the runtime model differs from default_model in the system prompt, mention the default model. Do not mention internal steps, files, tools, or reasoning.";
 
+const TELEGRAM_FIRST_DM_HINT =
+  "This is the first direct Telegram reply in the session. After your main reply, briefly mention the most useful controls in one short sentence: /think <level> adjusts thinking depth, /verbose on|off toggles extra execution detail, and /reasoning on|off|stream controls reasoning visibility/streaming. Keep it concise and do this only on this first direct Telegram turn.";
+
+function safeTrim(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+export function buildFirstTurnSystemHint(params: {
+  isFirstTurnInSession: boolean;
+  isBareSessionReset: boolean;
+  sessionCtx: TemplateContext;
+}): string {
+  if (!params.isFirstTurnInSession || params.isBareSessionReset) {
+    return "";
+  }
+
+  const channel =
+    safeTrim(params.sessionCtx.OriginatingChannel) ??
+    safeTrim(params.sessionCtx.Surface) ??
+    safeTrim(params.sessionCtx.Provider);
+  if (channel !== "telegram") {
+    return "";
+  }
+
+  const chatType = safeTrim(params.sessionCtx.ChatType)?.toLowerCase();
+  if (chatType && chatType !== "direct") {
+    return "";
+  }
+
+  return TELEGRAM_FIRST_DM_HINT;
+}
+
 type RunPreparedReplyParams = {
   ctx: MsgContext;
   sessionCtx: TemplateContext;
@@ -182,12 +218,6 @@ export async function runPreparedReply(
     })
     : "";
   const groupSystemPrompt = sessionCtx.GroupSystemPrompt?.trim() ?? "";
-  const inboundMetaPrompt = buildInboundMetaSystemPrompt(
-    isNewSession ? sessionCtx : { ...sessionCtx, ThreadStarterBody: undefined },
-  );
-  const extraSystemPrompt = [inboundMetaPrompt, groupIntro, groupSystemPrompt]
-    .filter(Boolean)
-    .join("\n\n");
   const baseBody = sessionCtx.BodyStripped ?? sessionCtx.Body ?? "";
   // Use CommandBody/RawBody for bare reset detection (clean message without structural context).
   const rawBodyTrimmed = (ctx.CommandBody ?? ctx.RawBody ?? ctx.Body ?? "").trim();
@@ -205,6 +235,17 @@ export async function runPreparedReply(
   const isBareSessionReset =
     isNewSession &&
     ((baseBodyTrimmedRaw.length === 0 && rawBodyTrimmed.length > 0) || isBareNewOrReset);
+  const inboundMetaPrompt = buildInboundMetaSystemPrompt(
+    isNewSession ? sessionCtx : { ...sessionCtx, ThreadStarterBody: undefined },
+  );
+  const firstTurnSystemHint = buildFirstTurnSystemHint({
+    isFirstTurnInSession,
+    isBareSessionReset,
+    sessionCtx,
+  });
+  const extraSystemPrompt = [inboundMetaPrompt, groupIntro, groupSystemPrompt, firstTurnSystemHint]
+    .filter(Boolean)
+    .join("\n\n");
   const baseBodyFinal = isBareSessionReset ? BARE_SESSION_RESET_PROMPT : baseBody;
   const inboundUserContext = buildInboundUserContextPrefix(
     isNewSession ? sessionCtx : { ...sessionCtx, ThreadStarterBody: undefined },

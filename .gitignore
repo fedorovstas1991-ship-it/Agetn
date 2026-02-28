@@ -71,6 +71,8 @@ apps/ios/*.mobileprovision
 .local/
 IDENTITY.md
 USER.md
+!docs/reference/templates/IDENTITY.md
+!docs/reference/templates/USER.md
 .tgz
 
 # local tooling
@@ -81,3 +83,5 @@ USER.md
 .agent/*.json
 !.agent/workflows/
 local/
+!src/commands/onboard-non-interactive/local/
+!src/commands/onboard-non-interactive/local/**

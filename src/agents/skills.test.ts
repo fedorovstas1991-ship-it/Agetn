@@ -164,6 +164,28 @@ describe("buildWorkspaceSkillsPrompt", () => {
     expect(prompt).toContain(path.join(bundledSkillDir, "SKILL.md"));
   });
 
+  it("loads shipped yagent operating skill from project skills directory", async () => {
+    const workspaceDir = await makeWorkspace();
+    const projectSkillsDir = path.resolve("skills");
+
+    const entries = loadWorkspaceSkillEntries(workspaceDir, {
+      managedSkillsDir: path.join(workspaceDir, ".managed"),
+      bundledSkillsDir: path.join(workspaceDir, ".bundled"),
+      config: {
+        skills: {
+          load: {
+            extraDirs: [projectSkillsDir],
+          },
+        },
+      },
+    });
+
+    const skill = entries.find((entry) => entry.skill.name === "yagent-operating-rhythm");
+    expect(skill).toBeDefined();
+    expect(skill?.skill.source).toBe("openclaw-extra");
+    expect(skill?.skill.description).toContain("heartbeat");
+  });
+
   it("loads extra skill folders from config (lowest precedence)", async () => {
     const workspaceDir = await makeWorkspace();
     const extraDir = path.join(workspaceDir, ".extra");
